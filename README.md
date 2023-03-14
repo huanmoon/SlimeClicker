@@ -9,7 +9,7 @@ Run SlimeClicker.exe
 # Ur code is a trush
 U r right
 
-#There r so many bugs
+# There r so many bugs
 Because SlimeClicker is a Beta version now.Report bugs in Issues.
 
 # 如何使用？
