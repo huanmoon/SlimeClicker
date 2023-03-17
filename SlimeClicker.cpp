@@ -63,7 +63,18 @@ int Load() {
 
     infile >> reader;
     cout << reader << endl;
+    chance = reader;
     cout << "blockhit chance load succefully!" << endl;
+
+    infile >> reader;
+    cout << reader << endl;
+    is_randomcps_enable = reader;
+    cout << "is_randomcps_enable load succefully!" << endl;
+    
+    infile >> reader;
+    cout << reader << endl;
+    mincps = reader;
+    cout << "mincps load succefully!" << endl;
 
     infile.close();
 }
@@ -219,7 +230,7 @@ void GUI() {
             ofstream outfile;
             string file = "./config.txt";
             outfile.open(file, ios::trunc | ios::out);
-            outfile << cps << endl << delay << endl << is_renable << endl << rcps << endl << is_blockhit_enable <<endl << chance;
+            outfile << cps << endl << delay << endl << is_renable << endl << rcps << endl << is_blockhit_enable <<endl << chance << endl <<is_randomcps_enable << endl << mincps << endl;
             outfile.close();
             cout << "config save succefully!" << endl;
         }
