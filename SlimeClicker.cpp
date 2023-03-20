@@ -9,6 +9,8 @@ using namespace std;
 string cmd;
 int cps = 5;
 int delay = 100;
+int rdelay = 100;
+int mindelay = 100;
 bool is_renable = false;
 int rcps = 2;
 bool is_blockhit_enable = false;
@@ -16,7 +18,9 @@ int randomnum = 0;
 int chance = 0;
 int mincps = 0;
 bool is_randomcps_enable = false;
-int truecps = 0;
+int truedelay= 0;
+bool last_state = false;
+bool r_last_state = false;
 
 void Clicker();
 void GUI();
@@ -28,11 +32,7 @@ int Load() {
     infile.open(file);
     if (infile.fail()) {
         cout << "config load failed!" << endl;
-        /*Sleep(1000);
-        cout << "exit in 2 seconds." << endl;
-        Sleep(1000);
-        cout << "exit in 1 seconds." << endl;
-        Sleep(1000);*/
+
         return 1;
     }
     int reader;
@@ -40,11 +40,6 @@ int Load() {
     cout << reader << endl;
     cps = reader;
     cout << "cps load succefully!" << endl;
-
-    infile >> reader;
-    cout << reader << endl;
-    delay = reader;
-    cout << "click delay load succefully!" << endl;
 
     infile >> reader;
     cout << reader << endl;
@@ -75,7 +70,10 @@ int Load() {
     cout << reader << endl;
     mincps = reader;
     cout << "mincps load succefully!" << endl;
-
+    
+    delay = 2000 / cps;
+    rdelay = 2000 / rcps;
+    mindelay = 2000 / mincps;
     infile.close();
 }
 
@@ -83,47 +81,61 @@ void Clicker() {
     POINT cursorPos;
     int x;
     int y;
-    bool is_enable = false;
     while (1) {
         GetCursorPos(&cursorPos);
         x = cursorPos.x;
         y = cursorPos.y;
-        if (is_enable) {
+        //cout << "test..." << endl;
+
+        if (GetKeyState(VK_LBUTTON) & 0x8000 && !last_state) {
+            last_state = true;
+            cout << "clicker enable" << endl;
             if (is_randomcps_enable == true) {
-                truecps = rand() % cps-mincps+1;
+                truedelay = rand() % delay; //  -mindelay + 1;
             }
             else {
-                truecps = cps;
-            }
-            for (int i = 0; i <= truecps; i++) {
-                mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
-                mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-                if (is_blockhit_enable == true) {
-                    //blockhit
-                    randomnum = rand() % 101;
-                    if (randomnum <= chance) {
-                        mouse_event(MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0);
-                        mouse_event(MOUSEEVENTF_RIGHTUP, x, y, 0, 0);
-                    }
-                }
-                Sleep(delay);
+                truedelay = delay;
             }
         }
-        if (GetKeyState(VK_LBUTTON) & 0x800) {
-            is_enable = true;
-            cout << "clicker enable" << endl;
+        else if (!(GetKeyState(VK_LBUTTON) & 0x8000)) {
+            if (last_state) {
+                last_state = false;
+                cout << "clicker disable" << endl;
+            }
         }
+        /*
         else {
-            is_enable = false;
+            cout << "DEBUG: clicker default code" << endl;
+        }*/
+
+        if(GetKeyState(VK_RBUTTON) & 0x8000 && is_renable && !r_last_state) {
+            for (int i = 0; i <= rcps; i++) {
+                mouse_event(MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0);
+                //mouse_event(MOUSEEVENTF_RIGHTUP, x, y, 0, 0);
+                Sleep(rdelay);
+            }
+        }
+        else if (r_last_state) {
+            r_last_state = false;
             cout << "clicker disable" << endl;
         }
 
-        if(GetKeyState(VK_RBUTTON) & 0x800 && is_renable){
-            for (int i = 0; i <= rcps; i++) {
-                mouse_event(MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0);
-                mouse_event(MOUSEEVENTF_RIGHTUP, x, y, 0, 0);
-                Sleep(delay);
+        if (last_state) {
+            static int mousedown_counter = 0;
+            mousedown_counter++;
+            cout << "DEBUG: MOUSEEVENTF_LEFTDOWN" << " " << mousedown_counter
+                << " " << truedelay << endl;
+            mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0);
+            //mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+            if (is_blockhit_enable == true) {
+                //blockhit
+                randomnum = rand() % 101;
+                if (randomnum <= chance) {
+                    mouse_event(MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0);
+                    mouse_event(MOUSEEVENTF_RIGHTUP, x, y, 0, 0);
+                }
             }
+            Sleep(truedelay);
         }
 
         if (GetKeyState(VK_CONTROL) & 0x800) {
@@ -149,7 +161,7 @@ void Clicker() {
 }
 
 void GUI() {
-    cout << "SlimeClickerV0.7" << endl;
+    cout << "SlimeClickerV0.8" << endl;
     cout << "Thx for using SlimeClicker!"<<endl;
     cout << "This is just beta version,so there r a lot of bugs and problems." << endl;
     cout << "Enter 'help' to get help if u don't know how to use SlimeClicker." << endl;
@@ -159,7 +171,7 @@ void GUI() {
             cout << "wochao,yuan!";
         }
         else if (cmd == "help") {
-            cout << "U can use these commands in V0.7:" << endl;
+            cout << "U can use these commands in V0.8:" << endl;
             cout << "settings:to set SlimeClicker" << endl;
             cout << "save:to save ur config" << endl;
             cout << "load:to load ur config" << endl;
@@ -187,8 +199,11 @@ void GUI() {
             else {
                 is_randomcps_enable = false;
             }
-            cout << "enter click delay(ms):" << endl;
-            cin >> delay;
+            delay = 2000 / cps;
+            rdelay = 2000 / rcps;
+            mindelay = 2000 / mincps;
+            //cout << "enter click delay(ms):" << endl;
+            //cin >> delay;
             cout << "do u want to use right click?(Y/N)" << endl;
             cin >> cmd;
             if (cmd == "Y" || cmd == "y") {
@@ -230,9 +245,9 @@ void GUI() {
             ofstream outfile;
             string file = "./config.txt";
             outfile.open(file, ios::trunc | ios::out);
-            outfile << cps << endl << delay << endl << is_renable << endl << rcps << endl << is_blockhit_enable <<endl << chance << endl <<is_randomcps_enable << endl << mincps << endl;
+            outfile << cps << endl << endl << is_renable << endl << rcps << endl << is_blockhit_enable <<endl << chance << endl <<is_randomcps_enable << endl << mincps << endl;
             outfile.close();
-            cout << "config save succefully!" << endl;
+            cout << "config save succefully!" << endl; 
         }
         else if (cmd == "load") {
             Load();
