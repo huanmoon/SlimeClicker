@@ -21,10 +21,22 @@ bool is_randomcps_enable = false;
 int truedelay= 0;
 bool last_state = false;
 bool r_last_state = false;
+bool is_window = false;
 
 void Clicker();
 void GUI();
+void Window();
 int Load();
+
+void Window() {
+    HWND hwnd = FindWindow(NULL, TEXT("Notepad"));
+    if (hwnd != nullptr) {
+        cout << "yes" << endl;
+    }
+    else {
+        cout << "no" << endl;
+    }
+}
 
 int Load() {
     ifstream infile;
@@ -71,9 +83,9 @@ int Load() {
     mincps = reader;
     cout << "mincps load succefully!" << endl;
     
-    delay = 2000 / cps;
-    rdelay = 2000 / rcps;
-    mindelay = 2000 / mincps;
+    delay = 1000 / cps;
+    rdelay = 1000 / rcps;
+    mindelay = 1000 / mincps;
     infile.close();
 }
 
@@ -82,6 +94,9 @@ void Clicker() {
     int x;
     int y;
     while (1) {
+        if (is_window == true) {
+            Window();
+        }
         GetCursorPos(&cursorPos);
         x = cursorPos.x;
         y = cursorPos.y;
@@ -90,12 +105,6 @@ void Clicker() {
         if (GetKeyState(VK_LBUTTON) & 0x8000 && !last_state) {
             last_state = true;
             cout << "clicker enable" << endl;
-            if (is_randomcps_enable == true) {
-                truedelay = rand() % delay; //  -mindelay + 1;
-            }
-            else {
-                truedelay = delay;
-            }
         }
         else if (!(GetKeyState(VK_LBUTTON) & 0x8000)) {
             if (last_state) {
@@ -134,6 +143,12 @@ void Clicker() {
                     mouse_event(MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0);
                     mouse_event(MOUSEEVENTF_RIGHTUP, x, y, 0, 0);
                 }
+            }
+            if (is_randomcps_enable == true) {
+                truedelay = 1000 / (rand() % (cps - mincps) + mincps);
+            }
+            else {
+                truedelay = delay;
             }
             Sleep(truedelay);
         }
@@ -183,25 +198,29 @@ void GUI() {
         else if (cmd == "settings" || cmd == "setting") {
             cout << "enter ur cps:" << endl;
             cin >> cps;
+            if (cps <= 0) {
+                cout << "cps can't <= 0" << endl;
+            }
+            else {
+                delay = 1000 / cps;
+            }
             cout << "do u want to enable random cps?(Y/N)" << endl;
             cin >> cmd;
             if (cmd == "Y" || cmd == "y") {
                 cout << "enter ur mincps:" << endl;
                 cin >> mincps;
-                if (mincps > cps) {
-                    cout << "error:ur mincps can't > ur cps" << endl;
+                if (mincps >= cps) {
+                    cout << "error:ur mincps can't >= ur cps" << endl;
                     is_randomcps_enable = false;
                 }
                 else {
                     is_randomcps_enable = true;
+                    mindelay = 1000 / mincps;
                 }
             }
             else {
                 is_randomcps_enable = false;
             }
-            delay = 2000 / cps;
-            rdelay = 2000 / rcps;
-            mindelay = 2000 / mincps;
             //cout << "enter click delay(ms):" << endl;
             //cin >> delay;
             cout << "do u want to use right click?(Y/N)" << endl;
@@ -210,6 +229,7 @@ void GUI() {
                 is_renable = true;
                 cout << "enter ur right click cps:" << endl;
                 cin >> rcps;
+                rdelay = 1000 / rcps;
             }
             else {
                 is_renable = false;
@@ -225,6 +245,17 @@ void GUI() {
             else {
                 is_blockhit_enable = false;
             }
+
+            cout << "do u want to use autoclicker in just one window?(Y/N)" << endl;
+            cin >> cmd;
+            if (cmd == "Y" || cmd == "y") {
+                is_window = true;
+                cout << "enable!" << endl;
+            }
+            else {
+                is_window = false;
+            }
+
             cout << "set succefully!" << endl;
         }
         else if (cmd == "about") {
